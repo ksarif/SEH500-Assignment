@@ -10,7 +10,7 @@
 @ Blue  → PTA11 (PORTA_PCR11, GPIOA_PDOR bit11)
 @ Red   → PTC9  (PORTC_PCR9,  GPIOC_PDOR bit9)
 @ Green → PTE6  (PORTE_PCR6,  GPIOE_PDOR bit6)
-
+@originally named led-function.s
 setup_leds:
     @ Enable clocks: PORTA(9), PORTC(11), PORTE(13) in SIM_SCGC5 (0x40048038)
     ldr     r0, =0x40048038
