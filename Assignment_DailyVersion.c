@@ -18,17 +18,14 @@ static void buzzer_init(void);
 static void buzzer_on(void);
 static void buzzer_off(void);
 
-// Simple demo tracking
 volatile uint32_t seconds = 0, minutes = 0, hours = 0;
 volatile uint32_t daily_alarm_count = 0;
 volatile bool tick = false, alarm_active = false;
 volatile uint32_t alarm_start_time = 0;
 volatile uint8_t alarm_color_index = 0;
-
 #define BUZZER_PIN 2
 #define BUZZER_PORT GPIOC
-
-// Color constants for easy reference
+// Color constants
 #define COLOR_RED 0x01
 #define COLOR_GREEN 0x02
 #define COLOR_BLUE 0x04
@@ -36,7 +33,6 @@ volatile uint8_t alarm_color_index = 0;
 #define COLOR_CYAN 0x06 // Green + Blue (0b110)
 #define COLOR_MAGENTA 0x05 // Red + Blue (0b101)
 #define COLOR_WHITE 0x07 // All colors (0b111)
-
 // Array of all colors in rainbow order
 static const uint8_t rainbow_colors[] = {
     COLOR_RED, // 0
@@ -54,13 +50,13 @@ void PIT_CHANNEL_0_IRQHANDLER(void)
     PIT_ClearStatusFlags(PIT, PIT_CHANNEL_0, kPIT_TimerFlag);
     seconds++;
     if (alarm_active) {
-        // Directly use get_color_value assembly function
+       
         uint8_t color = get_color_value(alarm_color_index);
         set_single_color(color);
 
-        // Update color_index for next second
         alarm_color_index = (alarm_color_index + 1) % NUM_COLORS;
     }
+    //time tracker
     if (seconds >= 60) {
         seconds = 0;
         minutes++;
@@ -71,7 +67,7 @@ void PIT_CHANNEL_0_IRQHANDLER(void)
                 hours = 0;
             }
         }
-        // Trigger alarm at exactly 8:00:00
+        //Code to make alarm go off at 8
         if (hours == 8 && minutes == 0 && seconds == 0) {
             if (!alarm_active) {
                 alarm_start_time = (hours * 3600) + (minutes * 60) + seconds;
@@ -86,6 +82,7 @@ void PIT_CHANNEL_0_IRQHANDLER(void)
     }
     tick = true;
 }
+
 static void button_init(void)
 {
     SIM->SCGC5 |= (1 << 12);
@@ -96,6 +93,7 @@ static uint8_t button_pressed(void)
 {
     return !(GPIOD->PDIR & (1 << 11));
 }
+//Code for how to use external buzzer generated with AI in the interest of time.
 static void buzzer_init(void)
 {
     SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
@@ -103,6 +101,7 @@ static void buzzer_init(void)
     GPIOC->PDDR |= (1U << BUZZER_PIN);
     GPIOC->PDOR &= ~(1U << BUZZER_PIN);
 }
+//Also generated with AI
 static void buzzer_on(void) { GPIOC->PSOR = (1U << BUZZER_PIN); }
 static void buzzer_off(void) { GPIOC->PCOR = (1U << BUZZER_PIN); }
 int main(void)
@@ -134,13 +133,12 @@ int main(void)
                 if (button_pressed()) {
                     uint32_t alarm_end_time = (hours * 3600) + (minutes * 60) + seconds;
                     uint32_t alarm_duration = alarm_end_time - alarm_start_time;
-                    // Log alarm stopped and medication taken
                     PRINTF("MEDICATION_TAKEN,Day %d,%02d:%02d:%02d,%d\r\n",
                            daily_alarm_count - 1, hours, minutes, seconds, alarm_duration);
                     turn_off_rgb();
                     buzzer_off();
                     alarm_active = false;
-                    // Simple user feedback
+            
                     PRINTF(">>> Medication logged for Day %d! Next alarm: Day %d\r\n\n",
                            daily_alarm_count - 1, daily_alarm_count);
                 }
